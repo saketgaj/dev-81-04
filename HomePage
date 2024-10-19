@@ -1,0 +1,32 @@
+package application;
+
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.geometry.Insets;
+
+public class HomePage {
+	private Scene homeScene;
+
+    public HomePage(Stage primaryStage) {
+        Label titleLabel = new Label("MyBudgeter");
+        Button createAccountButton = new Button("Create New Account");
+
+        VBox homeLayout = new VBox(10);
+        homeLayout.setPadding(new Insets(20));
+        homeLayout.getChildren().addAll(titleLabel, createAccountButton);
+
+        homeScene = new Scene(homeLayout, 300, 200);
+
+        createAccountButton.setOnAction(e -> {
+            NewAccountPage newAccountPage = new NewAccountPage(primaryStage);
+            primaryStage.setScene(newAccountPage.getNewAccountScene());
+        });
+    }
+
+    public Scene getHomeScene() {
+        return homeScene;
+    }
+}
