@@ -1,49 +1,81 @@
-
 package application;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.DatePicker;
+import java.time.LocalDate;
 
 
 public class Main extends Application {
-	@Override
 	public void start(Stage primaryStage) {
-		try {
-			BorderPane root = new BorderPane();
-			Scene scene = new Scene(root,400,400);
-			primaryStage.setScene(scene);
-			primaryStage.setTitle("MyBudgeter");
-			primaryStage.show();
-			
-			showHomePage(primaryStage);
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void showHomePage(Stage primaryStage) {
-        Button accountButton = new Button("Create New Account");
-        accountButton.setOnAction(e -> showNewAccountPage(primaryStage));
-
-        StackPane layout = new StackPane();
-        layout.getChildren().add(accountButton);
-
-        Scene homeScene = new Scene(layout, 300, 200);
+        Label titleLabel = new Label("MyBudgeter");
+        Button createAccountButton = new Button("Create New Account");
+        
+        VBox homeLayout = new VBox(10);
+        homeLayout.setPadding(new Insets(20));
+        homeLayout.getChildren().addAll(titleLabel, createAccountButton);
+        
+        Scene homeScene = new Scene(homeLayout, 300, 200);
+        primaryStage.setTitle("MyBudgeter");
         primaryStage.setScene(homeScene);
+        primaryStage.setResizable(true);
         primaryStage.show();
+
+        Label accountNameLabel = new Label("Account Name:");
+        TextField accountNameField = new TextField();
+        
+        Label openingDateLabel = new Label("Opening Date:");
+        DatePicker openingDatePicker = new DatePicker(LocalDate.now());
+        
+        Label openingBalanceLabel = new Label("Opening Balance:");
+        TextField openingBalanceField = new TextField();
+        
+        Button submitButton = new Button("Submit");
+        
+        VBox newAccountLayout = new VBox(10);
+        newAccountLayout.setPadding(new Insets(20));
+        newAccountLayout.getChildren().addAll(
+                accountNameLabel, accountNameField,
+                openingDateLabel, openingDatePicker,
+                openingBalanceLabel, openingBalanceField,
+                submitButton
+        );
+        
+        Scene newAccountScene = new Scene(newAccountLayout, 400, 300);
+
+        createAccountButton.setOnAction(e -> primaryStage.setScene(newAccountScene));
+
+        submitButton.setOnAction(e -> {
+            String accountName = accountNameField.getText();
+            LocalDate openingDate = openingDatePicker.getValue();
+            String openingBalance = openingBalanceField.getText();
+
+            if (accountName.isEmpty() || openingBalance.isEmpty()) {
+                showAlert(AlertType.ERROR, "Error", "Please fill in all fields.");
+            } else {
+                showAlert(AlertType.INFORMATION, "Success", "Account created successfully!");
+                accountNameField.clear();
+                openingDatePicker.setValue(LocalDate.now());
+                openingBalanceField.clear();
+                primaryStage.setScene(homeScene); 
+            }
+        });
     }
 
-    private void showNewAccountPage(Stage primaryStage) {
-        NewAccountPage newAccountPage = new NewAccountPage();
-        Scene accountScene = new Scene(newAccountPage.getLayout(), 400, 300);
-        primaryStage.setScene(accountScene);
+    private void showAlert(AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
-	
-	public static void main(String[] args) {
-		launch(args);
-	}
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
