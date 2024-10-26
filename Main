@@ -1,78 +1,90 @@
 package application;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.DatePicker;
-import java.time.LocalDate;
-
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class Main extends Application {
-	public void start(Stage primaryStage) {
+    private static List<String> accountNames = new ArrayList<>();
+
+    public void start(Stage primaryStage) {
+        Database.createDatabase();
+
+        try {
+            Font.loadFont(Main.class.getResourceAsStream("/RobotoMono.ttf"), 14);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Image logoImage = null;
+        try {
+            logoImage = new Image(Main.class.getResourceAsStream("/MoneyLogo.png"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        ImageView logoImageView = new ImageView(logoImage);
+        logoImageView.setFitHeight(80);
+        logoImageView.setFitWidth(80);
+        logoImageView.setPreserveRatio(true);
+
         Label titleLabel = new Label("MyBudgeter");
+        titleLabel.setFont(new Font("Roboto Mono", 24));
+        titleLabel.setTextFill(javafx.scene.paint.Color.web("#2E8B57"));
+
         Button createAccountButton = new Button("Create New Account");
-        
-        VBox homeLayout = new VBox(10);
-        homeLayout.setPadding(new Insets(20));
-        homeLayout.getChildren().addAll(titleLabel, createAccountButton);
-        
-        Scene homeScene = new Scene(homeLayout, 300, 200);
+        createAccountButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+
+        Button viewAccountsButton = new Button("View All Accounts");
+        viewAccountsButton.setStyle("-fx-background-color: #008CBA; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+
+        VBox homeLayout = new VBox(20);
+        homeLayout.setPadding(new Insets(30));
+        homeLayout.setAlignment(Pos.CENTER);
+        homeLayout.setStyle("-fx-background-color: #F0F8FF;");
+        homeLayout.getChildren().addAll(logoImageView, titleLabel, createAccountButton, viewAccountsButton);
+
+        Scene homeScene = new Scene(homeLayout, 400, 300);
         primaryStage.setTitle("MyBudgeter");
         primaryStage.setScene(homeScene);
         primaryStage.setResizable(true);
         primaryStage.show();
 
-        Label accountNameLabel = new Label("Account Name:");
-        TextField accountNameField = new TextField();
-        
-        Label openingDateLabel = new Label("Opening Date:");
-        DatePicker openingDatePicker = new DatePicker(LocalDate.now());
-        
-        Label openingBalanceLabel = new Label("Opening Balance:");
-        TextField openingBalanceField = new TextField();
-        
-        Button submitButton = new Button("Submit");
-        
-        VBox newAccountLayout = new VBox(10);
-        newAccountLayout.setPadding(new Insets(20));
-        newAccountLayout.getChildren().addAll(
-                accountNameLabel, accountNameField,
-                openingDateLabel, openingDatePicker,
-                openingBalanceLabel, openingBalanceField,
-                submitButton
-        );
-        
-        Scene newAccountScene = new Scene(newAccountLayout, 400, 300);
+        NewAccountPage newAccountPage = new NewAccountPage(primaryStage, accountNames);
 
-        createAccountButton.setOnAction(e -> primaryStage.setScene(newAccountScene));
+        createAccountButton.setOnAction(e -> primaryStage.setScene(newAccountPage.getNewAccountScene()));
 
-        submitButton.setOnAction(e -> {
-            String accountName = accountNameField.getText();
-            LocalDate openingDate = openingDatePicker.getValue();
-            String openingBalance = openingBalanceField.getText();
-
-            if (accountName.isEmpty() || openingBalance.isEmpty()) {
-                showAlert(AlertType.ERROR, "Error", "Please fill in all fields.");
-            } else {
-                showAlert(AlertType.INFORMATION, "Success", "Account created successfully!");
-                accountNameField.clear();
-                openingDatePicker.setValue(LocalDate.now());
-                openingBalanceField.clear();
-                primaryStage.setScene(homeScene); 
-            }
-        });
+        viewAccountsButton.setOnAction(e -> showAccountsTable(primaryStage));
     }
 
-    private void showAlert(AlertType alertType, String title, String message) {
-        Alert alert = new Alert(alertType);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    private void showAccountsTable(Stage primaryStage) {
+        TableView<Account> table = new TableView<>(Database.getAllAccounts());
+
+        TableColumn<Account, String> nameCol = new TableColumn<>("Account Name");
+        nameCol.setCellValueFactory(data -> data.getValue().accountNameProperty());
+
+        TableColumn<Account, LocalDate> dateCol = new TableColumn<>("Opening Date");
+        dateCol.setCellValueFactory(data -> data.getValue().openingDateProperty());
+
+        TableColumn<Account, Double> balanceCol = new TableColumn<>("Opening Balance");
+        balanceCol.setCellValueFactory(data -> data.getValue().openingBalanceProperty().asObject());
+
+        table.getColumns().addAll(nameCol, dateCol, balanceCol);
+
+        BorderPane layout = new BorderPane(table);
+        Scene tableScene = new Scene(layout, 400, 300);
+        primaryStage.setScene(tableScene);
     }
 
     public static void main(String[] args) {
