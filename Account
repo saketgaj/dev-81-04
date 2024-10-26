@@ -1,0 +1,41 @@
+package application;
+
+import javafx.beans.property.*;
+
+import java.time.LocalDate;
+
+public class Account {
+    private final StringProperty accountName;
+    private final ObjectProperty<LocalDate> openingDate;
+    private final DoubleProperty openingBalance;
+
+    public Account(String accountName, LocalDate openingDate, double openingBalance) {
+        this.accountName = new SimpleStringProperty(accountName);
+        this.openingDate = new SimpleObjectProperty<>(openingDate);
+        this.openingBalance = new SimpleDoubleProperty(openingBalance);
+    }
+
+    public StringProperty accountNameProperty() {
+        return accountName;
+    }
+
+    public ObjectProperty<LocalDate> openingDateProperty() {
+        return openingDate;
+    }
+
+    public DoubleProperty openingBalanceProperty() {
+        return openingBalance;
+    }
+
+    public String getAccountName() {
+        return accountName.get();
+    }
+
+    public LocalDate getOpeningDate() {
+        return openingDate.get();
+    }
+
+    public double getOpeningBalance() {
+        return openingBalance.get();
+    }
+}
