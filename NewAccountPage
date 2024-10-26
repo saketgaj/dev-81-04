@@ -4,62 +4,108 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+
 import java.time.LocalDate;
+import java.util.List;
 
 public class NewAccountPage {
-	 private Scene newAccountScene;
+    private Scene newAccountScene;
+    private List<String> accountNames;
+    private java.util.function.Consumer<Account> onAccountCreated;
 
-	    public NewAccountPage(Stage primaryStage) {
-	        Label accountNameLabel = new Label("Account Name:");
-	        TextField accountNameField = new TextField();
+    public NewAccountPage(Stage primaryStage, List<String> accountNames) {
+        this.accountNames = accountNames;
 
-	        Label openingDateLabel = new Label("Opening Date:");
-	        DatePicker openingDatePicker = new DatePicker(LocalDate.now());
+        Label accountNameLabel = new Label("Account Name:");
+        accountNameLabel.setFont(Font.font("Roboto Mono", FontWeight.BOLD, 14));
 
-	        Label openingBalanceLabel = new Label("Opening Balance:");
-	        TextField openingBalanceField = new TextField();
+        TextField accountNameField = new TextField();
+        accountNameField.setPromptText("Enter account name");
+        accountNameField.setStyle("-fx-background-color: #E0F7FA; -fx-border-color: #00897B; -fx-border-radius: 5; -fx-padding: 10;");
 
-	        Button submitButton = new Button("Submit");
+        Label openingDateLabel = new Label("Opening Date:");
+        openingDateLabel.setFont(Font.font("Roboto Mono", FontWeight.BOLD, 14));
+        
+        DatePicker openingDatePicker = new DatePicker(LocalDate.now());
 
-	        VBox newAccountLayout = new VBox(10);
-	        newAccountLayout.setPadding(new Insets(20));
-	        newAccountLayout.getChildren().addAll(
-	                accountNameLabel, accountNameField,
-	                openingDateLabel, openingDatePicker,
-	                openingBalanceLabel, openingBalanceField,
-	                submitButton
-	        );
+        Label openingBalanceLabel = new Label("Opening Balance:");
+        openingBalanceLabel.setFont(Font.font("Roboto Mono", FontWeight.BOLD, 14));
 
-	        newAccountScene = new Scene(newAccountLayout, 400, 300);
+        TextField openingBalanceField = new TextField();
+        openingBalanceField.setPromptText("Enter opening balance");
+        openingBalanceField.setStyle("-fx-background-color: #E0F7FA; -fx-border-color: #00897B; -fx-border-radius: 5; -fx-padding: 10;");
 
-	        submitButton.setOnAction(e -> {
-	            String accountName = accountNameField.getText();
-	            LocalDate openingDate = openingDatePicker.getValue();
-	            String openingBalance = openingBalanceField.getText();
+        Button submitButton = new Button("Submit");
+        submitButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
 
-	            if (accountName.isEmpty() || openingBalance.isEmpty()) {
-	                showAlert(Alert.AlertType.ERROR, "Error", "Please fill in all fields.");
-	            } else {
-	                showAlert(Alert.AlertType.INFORMATION, "Success", "Account created successfully!");
-	                accountNameField.clear();
-	                openingDatePicker.setValue(LocalDate.now());
-	                openingBalanceField.clear();
-	                primaryStage.setScene(new HomePage(primaryStage).getHomeScene()); // Return to homepage
-	            }
-	        });
-	    }
+        VBox newAccountLayout = new VBox(15);  
+        newAccountLayout.setPadding(new Insets(30));	
+        newAccountLayout.setAlignment(Pos.CENTER_LEFT); 
+        newAccountLayout.setStyle("-fx-background-color: #F9F9F9;"); 
 
-	    public Scene getNewAccountScene() {
-	        return newAccountScene;
-	    }
-	    
-	    public static void showAlert(AlertType alertType, String title, String message) {
-	        Alert alert = new Alert(alertType);
-	        alert.setTitle(title);
-	        alert.setHeaderText(null);
-	        alert.setContentText(message);
-	        alert.showAndWait();
-	    }
+        newAccountLayout.getChildren().addAll(
+                accountNameLabel, accountNameField,
+                openingDateLabel, openingDatePicker,
+                openingBalanceLabel, openingBalanceField,
+                submitButton
+        );
+
+        newAccountScene = new Scene(newAccountLayout, 450, 350);
+
+        submitButton.setOnAction(e -> {
+            String accountName = accountNameField.getText();
+            LocalDate openingDate = openingDatePicker.getValue();
+            String openingBalanceText = openingBalanceField.getText();
+
+            if (accountName.isEmpty() || openingBalanceText.isEmpty()) {
+                showAlert(AlertType.ERROR, "Error", "Please fill in all fields.");
+            } else if (accountNames.contains(accountName)) {
+                showAlert(AlertType.ERROR, "Error", "Account name already exists. Please choose a different name.");
+            } else {
+                try {
+                    double openingBalance = Double.parseDouble(openingBalanceText);
+                    Account newAccount = new Account(accountName, openingDate, openingBalance);
+
+                    Database.addAccount(newAccount);
+                    accountNames.add(accountName); 
+
+                    showAlert(AlertType.INFORMATION, "Success", "Account created successfully!");
+
+                    accountNameField.clear();
+                    openingDatePicker.setValue(LocalDate.now());
+                    openingBalanceField.clear();
+
+                    if (onAccountCreated != null) {
+                        onAccountCreated.accept(newAccount);
+                    }
+
+                    primaryStage.setScene(new HomePage(primaryStage, accountNames).getHomeScene());
+
+                } catch (NumberFormatException ex) {
+                    showAlert(AlertType.ERROR, "Error", "Please enter a valid number for the opening balance.");
+                }
+            }
+        });
+    }
+
+    public Scene getNewAccountScene() {
+        return newAccountScene;
+    }
+
+    public void setOnAccountCreated(java.util.function.Consumer<Account> handler) {
+        this.onAccountCreated = handler;
+    }
+
+    public static void showAlert(AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
 }
