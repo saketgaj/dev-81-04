@@ -17,10 +17,22 @@ import javafx.scene.image.ImageView;
 
 public class Main extends Application {
     private static List<String> accountNames = new ArrayList<>();
+    private Stage primaryStage;
 
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         Database.createDatabase();
 
+        loadResources();
+
+        setHomeScene();
+        
+        primaryStage.setTitle("MyBudgeter");
+        primaryStage.setResizable(true);
+        primaryStage.show();
+    }
+
+    private void loadResources() {
         try {
             Font.loadFont(Main.class.getResourceAsStream("/RobotoMono.ttf"), 14);
         } catch (Exception e) {
@@ -34,6 +46,14 @@ public class Main extends Application {
             e.printStackTrace();
         }
 
+        ImageView logoImageView = new ImageView(logoImage);
+        logoImageView.setFitHeight(80);
+        logoImageView.setFitWidth(80);
+        logoImageView.setPreserveRatio(true);
+    }
+
+    private void setHomeScene() {
+        Image logoImage = new Image(Main.class.getResourceAsStream("/MoneyLogo.png"));
         ImageView logoImageView = new ImageView(logoImage);
         logoImageView.setFitHeight(80);
         logoImageView.setFitWidth(80);
@@ -56,10 +76,7 @@ public class Main extends Application {
         homeLayout.getChildren().addAll(logoImageView, titleLabel, createAccountButton, viewAccountsButton);
 
         Scene homeScene = new Scene(homeLayout, 400, 300);
-        primaryStage.setTitle("MyBudgeter");
         primaryStage.setScene(homeScene);
-        primaryStage.setResizable(true);
-        primaryStage.show();
 
         NewAccountPage newAccountPage = new NewAccountPage(primaryStage, accountNames);
 
@@ -82,10 +99,21 @@ public class Main extends Application {
 
         table.getColumns().addAll(nameCol, dateCol, balanceCol);
 
+        Button backButton = new Button("Back to Homepage");
+        backButton.setStyle("-fx-background-color: #FF6347; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        backButton.setOnAction(e -> setHomeScene());
+
+        VBox bottomLayout = new VBox(backButton);
+        bottomLayout.setAlignment(Pos.CENTER);
+        bottomLayout.setPadding(new Insets(10));
+
         BorderPane layout = new BorderPane(table);
+        layout.setBottom(bottomLayout);
+
         Scene tableScene = new Scene(layout, 400, 300);
         primaryStage.setScene(tableScene);
     }
+
 
     public static void main(String[] args) {
         launch(args);
