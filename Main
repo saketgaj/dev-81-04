@@ -1,9 +1,5 @@
 package application;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -12,12 +8,18 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class Main extends Application {
     private static List<String> accountNames = new ArrayList<>();
+    private static Set<String> transactionTypes = new HashSet<>(); // Store unique transaction types
     private Stage primaryStage;
+    private Button viewAccountsButton;
 
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -26,7 +28,7 @@ public class Main extends Application {
         loadResources();
 
         setHomeScene();
-        
+
         primaryStage.setTitle("MyBudgeter");
         primaryStage.setResizable(true);
         primaryStage.show();
@@ -38,51 +40,69 @@ public class Main extends Application {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        Image logoImage = null;
-        try {
-            logoImage = new Image(Main.class.getResourceAsStream("/MoneyLogo.png"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        ImageView logoImageView = new ImageView(logoImage);
-        logoImageView.setFitHeight(80);
-        logoImageView.setFitWidth(80);
-        logoImageView.setPreserveRatio(true);
     }
 
     private void setHomeScene() {
-        Image logoImage = new Image(Main.class.getResourceAsStream("/MoneyLogo.png"));
-        ImageView logoImageView = new ImageView(logoImage);
-        logoImageView.setFitHeight(80);
-        logoImageView.setFitWidth(80);
-        logoImageView.setPreserveRatio(true);
-
         Label titleLabel = new Label("MyBudgeter");
         titleLabel.setFont(new Font("Roboto Mono", 24));
         titleLabel.setTextFill(javafx.scene.paint.Color.web("#2E8B57"));
 
         Button createAccountButton = new Button("Create New Account");
         createAccountButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        createAccountButton.setOnAction(e -> primaryStage.setScene(new NewAccountPage(primaryStage, accountNames).getNewAccountScene()));
 
-        Button viewAccountsButton = new Button("View All Accounts");
-        viewAccountsButton.setStyle("-fx-background-color: #008CBA; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        Button defineTransactionTypesButton = new Button("Define Transaction Types");
+        defineTransactionTypesButton.setStyle("-fx-background-color: #FF8C00; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        defineTransactionTypesButton.setOnAction(e -> primaryStage.setScene(getDefineTransactionTypesScene()));
+
+        if (viewAccountsButton == null) {
+            viewAccountsButton = new Button("View All Accounts");
+            viewAccountsButton.setStyle("-fx-background-color: #008CBA; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+            viewAccountsButton.setOnAction(e -> showAccountsTable(primaryStage));
+        }
 
         VBox homeLayout = new VBox(20);
         homeLayout.setPadding(new Insets(30));
         homeLayout.setAlignment(Pos.CENTER);
         homeLayout.setStyle("-fx-background-color: #F0F8FF;");
-        homeLayout.getChildren().addAll(logoImageView, titleLabel, createAccountButton, viewAccountsButton);
+        homeLayout.getChildren().addAll(titleLabel, createAccountButton, defineTransactionTypesButton, viewAccountsButton);
 
-        Scene homeScene = new Scene(homeLayout, 400, 300);
-        primaryStage.setScene(homeScene);
+        primaryStage.setScene(new Scene(homeLayout, 400, 300));
+    }
 
-        NewAccountPage newAccountPage = new NewAccountPage(primaryStage, accountNames);
+    private Scene getDefineTransactionTypesScene() {
+        Label titleLabel = new Label("Define Transaction Types");
+        titleLabel.setFont(new Font("Roboto Mono", 20));
 
-        createAccountButton.setOnAction(e -> primaryStage.setScene(newAccountPage.getNewAccountScene()));
+        TextField transactionTypeField = new TextField();
+        transactionTypeField.setPromptText("Enter transaction type name");
 
-        viewAccountsButton.setOnAction(e -> showAccountsTable(primaryStage));
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: red;");
+
+        Button saveButton = new Button("Save Transaction Type");
+        saveButton.setOnAction(e -> {
+            String transactionType = transactionTypeField.getText().trim();
+
+            if (transactionType.isEmpty()) {
+                errorLabel.setText("Transaction type name cannot be empty.");
+            } else if (transactionTypes.contains(transactionType)) {
+                errorLabel.setText("Transaction type already exists.");
+            } else {
+                transactionTypes.add(transactionType);
+                errorLabel.setText("Transaction type added successfully.");
+                transactionTypeField.clear();
+            }
+        });
+
+        Button backButton = new Button("Back to Homepage");
+        backButton.setOnAction(e -> setHomeScene());
+
+        VBox layout = new VBox(10, titleLabel, transactionTypeField, errorLabel, saveButton, backButton);
+        layout.setPadding(new Insets(20));
+        layout.setAlignment(Pos.CENTER);
+
+        return new Scene(layout, 400, 300);
     }
 
     private void showAccountsTable(Stage primaryStage) {
@@ -110,10 +130,8 @@ public class Main extends Application {
         BorderPane layout = new BorderPane(table);
         layout.setBottom(bottomLayout);
 
-        Scene tableScene = new Scene(layout, 400, 300);
-        primaryStage.setScene(tableScene);
+        primaryStage.setScene(new Scene(layout, 400, 300));
     }
-
 
     public static void main(String[] args) {
         launch(args);
