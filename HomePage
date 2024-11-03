@@ -4,24 +4,36 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
+import java.util.List;
+
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 
 public class HomePage {
 	private Scene homeScene;
 
-    public HomePage(Stage primaryStage) {
+    public HomePage(Stage primaryStage, List<String> accountNames) {
         Label titleLabel = new Label("MyBudgeter");
+        titleLabel.setFont(Font.font("Roboto Mono", FontWeight.BOLD, 24));
+        titleLabel.setTextFill(Color.web("#2E8B57"));
         Button createAccountButton = new Button("Create New Account");
+        createAccountButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
 
-        VBox homeLayout = new VBox(10);
-        homeLayout.setPadding(new Insets(20));
+        VBox homeLayout = new VBox(20);  
+        homeLayout.setPadding(new Insets(30)); 
+        homeLayout.setAlignment(Pos.CENTER); 
+        homeLayout.setStyle("-fx-background-color: #F0F8FF;");
         homeLayout.getChildren().addAll(titleLabel, createAccountButton);
 
-        homeScene = new Scene(homeLayout, 300, 200);
+        homeScene = new Scene(homeLayout, 400, 300);  
 
         createAccountButton.setOnAction(e -> {
-            NewAccountPage newAccountPage = new NewAccountPage(primaryStage);
+            NewAccountPage newAccountPage = new NewAccountPage(primaryStage, accountNames);
             primaryStage.setScene(newAccountPage.getNewAccountScene());
         });
     }
