@@ -54,6 +54,10 @@ public class Main extends Application {
         Button defineTransactionTypesButton = new Button("Define Transaction Types");
         defineTransactionTypesButton.setStyle("-fx-background-color: #FF8C00; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
         defineTransactionTypesButton.setOnAction(e -> primaryStage.setScene(getDefineTransactionTypesScene()));
+        
+        Button getEnterTransactionTypesSceneButton = new Button("Enter Transaction");
+        getEnterTransactionTypesSceneButton.setStyle("-fx-background-color: #FF8C00; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        getEnterTransactionTypesSceneButton.setOnAction(e -> primaryStage.setScene(getEnterTransactionTypesScene()));
 
         if (viewAccountsButton == null) {
             viewAccountsButton = new Button("View All Accounts");
@@ -65,7 +69,7 @@ public class Main extends Application {
         homeLayout.setPadding(new Insets(30));
         homeLayout.setAlignment(Pos.CENTER);
         homeLayout.setStyle("-fx-background-color: #F0F8FF;");
-        homeLayout.getChildren().addAll(titleLabel, createAccountButton, defineTransactionTypesButton, viewAccountsButton);
+        homeLayout.getChildren().addAll(titleLabel, createAccountButton, defineTransactionTypesButton, getEnterTransactionTypesSceneButton, viewAccountsButton);
 
         primaryStage.setScene(new Scene(homeLayout, 400, 300));
     }
@@ -104,6 +108,71 @@ public class Main extends Application {
 
         return new Scene(layout, 400, 300);
     }
+    
+    private Scene getEnterTransactionTypesScene() {
+        Label titleLabel = new Label("Enter Transaction");
+        titleLabel.setFont(new Font("Roboto Mono", 20));
+        
+        DatePicker transactionDatePicker = new DatePicker(LocalDate.now());
+        
+        TextField description = new TextField();
+        description.setPromptText("Enter transaction description");
+        
+        TextField paymentAmount = new TextField();
+        paymentAmount.setPromptText("Enter payment amount");
+        
+        TextField depositAmount = new TextField();
+        depositAmount.setPromptText("Enter deposit amount");
+        
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: red;");
+        
+        //button to save the information
+        Button saveButton = new Button("Save Transaction");
+        LocalDate date = transactionDatePicker.getValue();
+        String desc = description.getText().trim();
+        String payAmount = paymentAmount.getText().trim();
+        String depAmount = depositAmount.getText().trim();
+        
+        
+        //validation:
+        if(desc.isEmpty()) {
+        	errorLabel.setText("Please fill in all required fields.");
+        }
+        else if(payAmount.isEmpty() && depAmount.isEmpty()) {
+        	errorLabel.setText("Please enter either a payment or deposit amount");
+        }
+        
+        else if(payAmount.isEmpty() && !isDouble(depAmount)) {
+        	errorLabel.setText("Please enter a valid deposit amount");
+        }
+        else if(!isDouble(payAmount) && depAmount.isEmpty()) {
+        	errorLabel.setText("Please enter a valid payment amount");
+        }
+        
+      
+        
+        
+        
+        VBox layout = new VBox(10, titleLabel, transactionDatePicker, description, paymentAmount, depositAmount);
+        layout.setPadding(new Insets(20));
+        layout.setAlignment(Pos.CENTER);
+
+        return new Scene(layout, 400, 400);
+     
+        
+
+}
+    
+    private boolean isDouble(String text) {
+        try {
+            Double.parseDouble(text);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+    
 
     private void showAccountsTable(Stage primaryStage) {
         TableView<Account> table = new TableView<>(Database.getAllAccounts());
