@@ -70,4 +70,25 @@ public class Database {
 
         return accounts;
     }
+    // Method to save a transaction to the database
+    public static boolean saveTransaction(String accountName, String transactionType, LocalDate date, 
+                                          String description, double paymentAmount, double depositAmount) {
+        String sql = "INSERT INTO Transactions(AccountName, TransactionType, TransactionDate, Description, PaymentAmount, DepositAmount) " +
+                     "VALUES(?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, accountName);
+            pstmt.setString(2, transactionType);
+            pstmt.setString(3, date.toString());
+            pstmt.setString(4, description);
+            pstmt.setDouble(5, paymentAmount);
+            pstmt.setDouble(6, depositAmount);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
