@@ -113,12 +113,17 @@ public class Main extends Application {
         Label titleLabel = new Label("Enter Transaction");
         titleLabel.setFont(new Font("Roboto Mono", 20));
 
-        // Dropdown for accounts
+        // Fetch account names and transaction types from the database
+        List<String> accountNames = new ArrayList<>();
+        for (Account account : Database.getAllAccounts()) {
+            accountNames.add(account.getAccountName());
+        }
+        
         ComboBox<String> accountDropdown = new ComboBox<>();
         accountDropdown.getItems().addAll(accountNames); // Populate with account names
         accountDropdown.getSelectionModel().selectFirst(); // Default to the first item
-
-        // Dropdown for transaction types
+        
+     // Dropdown for transaction types
         ComboBox<String> transactionTypeDropdown = new ComboBox<>();
         transactionTypeDropdown.getItems().addAll(transactionTypes);
         transactionTypeDropdown.getSelectionModel().selectFirst(); // Default to the first item
