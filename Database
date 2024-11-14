@@ -2,6 +2,9 @@ package application;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -15,23 +18,61 @@ public class Database {
     public static void createDatabase() {
         try {
             Class.forName("org.sqlite.JDBC");
-            
+
             try (Connection connection = DriverManager.getConnection(DATABASE_URL);
                  Statement stmt = connection.createStatement()) {
 
-                String sql = "CREATE TABLE IF NOT EXISTS Accounts ( " +
+                // Create Accounts table
+                String createAccountsTable = "CREATE TABLE IF NOT EXISTS Accounts (" +
                         "ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         "AccountName TEXT NOT NULL, " +
                         "OpeningDate TEXT NOT NULL, " +
                         "OpeningBalance REAL NOT NULL);";
 
-                stmt.executeUpdate(sql);
-                System.out.println("Table created successfully");
+                // Create transaction_types table
+                String createTransactionTypesTable = "CREATE TABLE IF NOT EXISTS transaction_types (" +
+                        "type_name TEXT PRIMARY KEY);";
+
+                // Create transactions table with transaction_type column
+                String createTransactionsTable = "CREATE TABLE IF NOT EXISTS transactions (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "account_name TEXT NOT NULL, " +
+                        "transaction_type TEXT NOT NULL, " +
+                        "transaction_date TEXT NOT NULL, " +
+                        "description TEXT, " +
+                        "payment_amount REAL, " +
+                        "deposit_amount REAL, " +
+                        "FOREIGN KEY(account_name) REFERENCES Accounts(AccountName), " +
+                        "FOREIGN KEY(transaction_type) REFERENCES transaction_types(type_name));";
+
+                // Execute SQL statements in order
+                stmt.executeUpdate(createAccountsTable);
+                stmt.executeUpdate(createTransactionTypesTable);
+                stmt.executeUpdate(createTransactionsTable);
+
             }
         } catch (ClassNotFoundException e) {
             System.err.println("SQLite JDBC Driver not found.");
         } catch (SQLException e) {
             System.err.println("SQL Exception: " + e.getMessage());
+        }
+    }
+
+
+    
+    
+    
+    public static void saveAccount(Account account) {
+        String sql = "INSERT INTO accounts (name, opening_date, opening_balance) VALUES (?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, account.getAccountName());
+            pstmt.setDate(2, Date.valueOf(account.getOpeningDate())); // Get LocalDate from SimpleObjectProperty
+            pstmt.setDouble(3, account.getOpeningBalance()); // Get double value from SimpleDoubleProperty
+            pstmt.executeUpdate();
+            System.out.println("Account added successfully: " + account.getAccountName());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
     
@@ -90,5 +131,38 @@ public class Database {
             e.printStackTrace();
             return false;
         }
+    }
+    
+    public static void saveTransactionType(String transactionType) {
+        String sql = "INSERT OR IGNORE INTO transaction_types (type_name) VALUES (?)";
+        
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, transactionType);
+            pstmt.executeUpdate();
+            System.out.println("Transaction type added successfully: " + transactionType);
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    
+    public static List<String> getAllTransactionTypes() {
+        List<String> transactionTypes = new ArrayList<>();
+        String sql = "SELECT transaction_type FROM transaction_types";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                transactionTypes.add(rs.getString("transaction_type"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return transactionTypes;
     }
 }
