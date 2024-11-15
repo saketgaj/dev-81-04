@@ -35,15 +35,16 @@ public class Database {
 
                 // Create transactions table with transaction_type column
                 String createTransactionsTable = "CREATE TABLE IF NOT EXISTS transactions (" +
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        "account_name TEXT NOT NULL, " +
-                        "transaction_type TEXT NOT NULL, " +
-                        "transaction_date TEXT NOT NULL, " +
-                        "description TEXT, " +
-                        "payment_amount REAL, " +
-                        "deposit_amount REAL, " +
-                        "FOREIGN KEY(account_name) REFERENCES Accounts(AccountName), " +
-                        "FOREIGN KEY(transaction_type) REFERENCES transaction_types(type_name));";
+                	    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                	    "account_name TEXT NOT NULL, " +
+                	    "transaction_type TEXT NOT NULL, " +
+                	    "transaction_date TEXT NOT NULL, " +
+                	    "description TEXT, " +
+                	    "payment_amount REAL, " +
+                	    "deposit_amount REAL, " +
+                	    "FOREIGN KEY(account_name) REFERENCES Accounts(AccountName), " +
+                	    "FOREIGN KEY(transaction_type) REFERENCES transaction_types(type_name));";
+
 
                 // Execute SQL statements in order
                 stmt.executeUpdate(createAccountsTable);
@@ -114,8 +115,9 @@ public class Database {
     // Method to save a transaction to the database
     public static boolean saveTransaction(String accountName, String transactionType, LocalDate date, 
                                           String description, double paymentAmount, double depositAmount) {
-        String sql = "INSERT INTO Transactions(AccountName, TransactionType, TransactionDate, Description, PaymentAmount, DepositAmount) " +
-                     "VALUES(?, ?, ?, ?, ?, ?)";
+    	String sql = "INSERT INTO transactions(account_name, transaction_type, transaction_date, description, payment_amount, deposit_amount) " +
+                "VALUES(?, ?, ?, ?, ?, ?)";
+
 
         try (Connection conn = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
