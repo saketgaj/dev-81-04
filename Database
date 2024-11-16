@@ -58,6 +58,34 @@ public class Database {
             System.err.println("SQL Exception: " + e.getMessage());
         }
     }
+    public static List<Transaction> getAllScheduledTransactions() {
+        List<Transaction> scheduledTransactions = new ArrayList<>();
+        String sql = "SELECT account_name, transaction_type, transaction_date, description, payment_amount, deposit_amount " +
+                     "FROM transactions " +
+                     "ORDER BY transaction_date ASC"; // Adjust sorting if needed
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                String accountName = rs.getString("account_name");
+                String transactionType = rs.getString("transaction_type");
+                LocalDate transactionDate = LocalDate.parse(rs.getString("transaction_date"));
+                String description = rs.getString("description");
+                double paymentAmount = rs.getDouble("payment_amount");
+                double depositAmount = rs.getDouble("deposit_amount");
+
+                Transaction transaction = new Transaction(accountName, transactionType, transactionDate, description, paymentAmount, depositAmount);
+                scheduledTransactions.add(transaction);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return scheduledTransactions;
+    }
 
 
     
@@ -68,8 +96,8 @@ public class Database {
         try (Connection conn = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, account.getAccountName());
-            pstmt.setDate(2, Date.valueOf(account.getOpeningDate())); // Get LocalDate from SimpleObjectProperty
-            pstmt.setDouble(3, account.getOpeningBalance()); // Get double value from SimpleDoubleProperty
+            pstmt.setDate(2, Date.valueOf(account.getOpeningDate())); 
+            pstmt.setDouble(3, account.getOpeningBalance()); y
             pstmt.executeUpdate();
             System.out.println("Account added successfully: " + account.getAccountName());
         } catch (SQLException e) {
@@ -112,7 +140,7 @@ public class Database {
 
         return accounts;
     }
-    // Method to save a transaction to the database
+
     public static boolean saveTransaction(String accountName, String transactionType, LocalDate date, 
                                           String description, double paymentAmount, double depositAmount) {
     	String sql = "INSERT INTO transactions(account_name, transaction_type, transaction_date, description, payment_amount, deposit_amount) " +
@@ -148,6 +176,29 @@ public class Database {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    public static List<Transaction> getAllTransactions() {
+        List<Transaction> transactions = new ArrayList<>();
+        String sql = "SELECT * FROM transactions ORDER BY transaction_date DESC";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                String accountName = rs.getString("account_name");
+                String transactionType = rs.getString("transaction_type");
+                LocalDate transactionDate = LocalDate.parse(rs.getString("transaction_date"));
+                String description = rs.getString("description");
+                double paymentAmount = rs.getDouble("payment_amount");
+                double depositAmount = rs.getDouble("deposit_amount");
+
+                transactions.add(new Transaction(accountName, transactionType, transactionDate, description, paymentAmount, depositAmount));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return transactions;
     }
 
     
