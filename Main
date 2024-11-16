@@ -1,6 +1,8 @@
 package application;
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -230,6 +232,51 @@ public class Main extends Application {
 
         primaryStage.setScene(new Scene(layout, 400, 300));
     }
+    private Scene getScheduledTransactionsScene() {
+        Label titleLabel = new Label("Scheduled Transactions");
+        titleLabel.setFont(new Font("Roboto Mono", 20));
+
+        // Create a TableView for scheduled transactions
+        TableView<Transaction> table = new TableView<>();
+        table.getItems().addAll(Database.getAllScheduledTransactions());
+
+        // Define columns
+        TableColumn<Transaction, String> accountCol = new TableColumn<>("Account Name");
+        accountCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getAccountName()));
+
+        TableColumn<Transaction, String> typeCol = new TableColumn<>("Transaction Type");
+        typeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTransactionType()));
+
+        TableColumn<Transaction, LocalDate> dateCol = new TableColumn<>("Transaction Date");
+        dateCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getTransactionDate()));
+
+        TableColumn<Transaction, String> descriptionCol = new TableColumn<>("Description");
+        descriptionCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDescription()));
+
+        TableColumn<Transaction, Double> paymentCol = new TableColumn<>("Payment Amount");
+        paymentCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getPaymentAmount()));
+
+        TableColumn<Transaction, Double> depositCol = new TableColumn<>("Deposit Amount");
+        depositCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getDepositAmount()));
+
+        // Add columns to the table
+        table.getColumns().addAll(accountCol, typeCol, dateCol, descriptionCol, paymentCol, depositCol);
+
+        // Sort table by Transaction Date in ascending order
+        table.getSortOrder().add(dateCol);
+
+        // Back button to return to the homepage
+        Button backButton = new Button("Back to Homepage");
+        backButton.setOnAction(e -> setHomeScene());
+
+        VBox layout = new VBox(10, titleLabel, table, backButton);
+        layout.setPadding(new Insets(20));
+        layout.setAlignment(Pos.CENTER);
+
+        return new Scene(layout, 600, 400);
+    }
+
+
 
     public static void main(String[] args) {
         launch(args);
