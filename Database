@@ -10,6 +10,8 @@ import javafx.collections.ObservableList;
 
 public class Database {
 	private static final String DATABASE_URL = "jdbc:sqlite:test.db";
+    private static List<ScheduledTransaction> scheduledTransactions = new ArrayList<>();
+
 
     public static void main(String[] args) {
         createDatabase();
@@ -57,6 +59,110 @@ public class Database {
         } catch (SQLException e) {
             System.err.println("SQL Exception: " + e.getMessage());
         }
+    }
+    
+    public static List<Transaction> getAllTransactions() {
+        List<Transaction> transactions = new ArrayList<>();
+        String sql = "SELECT * FROM transactions ORDER BY transaction_date DESC";
+
+        try (Connection conn =  DriverManager.getConnection(DATABASE_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                transactions.add(new Transaction(
+                        rs.getString("account_name"),
+                        rs.getString("transaction_type"),
+                        LocalDate.parse(rs.getString("transaction_date")),
+                        rs.getString("description"),
+                        rs.getDouble("payment_amount"),
+                        rs.getDouble("deposit_amount")
+                ));
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error fetching transactions: " + e.getMessage());
+        }
+        return transactions;
+    }
+    
+    public static void saveTransactionType(String transactionType) {
+        String sql = "INSERT OR IGNORE INTO transaction_types (type_name) VALUES (?)";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, transactionType);
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("Error saving transaction type: " + e.getMessage());
+        }
+    }
+    
+    public static List<String> getAllTransactionTypes() {
+        List<String> transactionTypes = new ArrayList<>();
+        String sql = "SELECT type_name FROM transaction_types";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                transactionTypes.add(rs.getString("type_name"));
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error fetching transaction types: " + e.getMessage());
+        }
+        return transactionTypes;
+    }
+    
+    
+    
+    public static ObservableList<ScheduledTransaction> getAllScheduledTransactions() {
+        ObservableList<ScheduledTransaction> scheduledTransactionsList = FXCollections.observableArrayList();
+        String sql = "SELECT account_name, transaction_type, transaction_date, description, payment_amount, deposit_amount " +
+                     "FROM transactions " +
+                     "ORDER BY transaction_date ASC"; // Adjust sorting if needed
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                String accountName = rs.getString("account_name");
+                String transactionType = rs.getString("transaction_type");
+                LocalDate transactionDate = LocalDate.parse(rs.getString("transaction_date"));
+                String description = rs.getString("description");
+                double paymentAmount = rs.getDouble("payment_amount");
+                double depositAmount = rs.getDouble("deposit_amount");
+
+                // Assuming 'scheduleName' and 'frequency' are not in the database
+                String scheduleName = "Default Schedule";  // Example placeholder value
+                String frequency = "Monthly";  // Example placeholder value
+
+                // Use the day of the month as the due date (you can adjust based on your needs)
+                int dueDate = transactionDate.getDayOfMonth();
+
+                // Create the ScheduledTransaction with the above details
+                ScheduledTransaction scheduledTransaction = new ScheduledTransaction(
+                    scheduleName,      // Use scheduleName if available in the database
+                    accountName,
+                    transactionType,
+                    frequency,         // Use frequency if available in the database
+                    dueDate,
+                    paymentAmount
+                );
+
+                scheduledTransactionsList.add(scheduledTransaction);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return scheduledTransactionsList;
     }
 
 
@@ -135,36 +241,13 @@ public class Database {
         }
     }
     
-    public static void saveTransactionType(String transactionType) {
-        String sql = "INSERT OR IGNORE INTO transaction_types (type_name) VALUES (?)";
-        
-        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, transactionType);
-            pstmt.executeUpdate();
-            System.out.println("Transaction type added successfully: " + transactionType);
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    
-    public static List<String> getAllTransactionTypes() {
-        List<String> transactionTypes = new ArrayList<>();
-        String sql = "SELECT transaction_type FROM transaction_types";
-
-        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                transactionTypes.add(rs.getString("transaction_type"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return transactionTypes;
+    public static boolean saveScheduledTransaction(String scheduleName, String accountName, String transactionType,
+        String frequency, int dueDate, double paymentAmount) {
+		if (scheduleName == null || accountName == null || transactionType == null || frequency == null) {
+		return false;
+		}
+		
+		scheduledTransactions.add(new ScheduledTransaction(scheduleName, accountName, transactionType, frequency, dueDate, paymentAmount));
+		return true;
     }
 }
