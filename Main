@@ -1,6 +1,9 @@
 package application;
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -41,6 +44,132 @@ public class Main extends Application {
             e.printStackTrace();
         }
     }
+    
+    private Scene getScheduledTransactionsScene() {
+        Label titleLabel = new Label("Scheduled Transactions");
+        titleLabel.setFont(new Font("Roboto Mono", 20));
+
+        // Create a TableView for scheduled transactions
+        ObservableList<ScheduledTransaction> scheduledTransactions = Database.getAllScheduledTransactions();
+        	
+        TableView<ScheduledTransaction> table = new TableView<>();
+        table.setItems(scheduledTransactions);  // Use setItems to bind data to the TableView
+
+        // Define columns
+        TableColumn<ScheduledTransaction, String> scheduleNameCol = new TableColumn<>("Schedule Name");
+        scheduleNameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getScheduleName()));
+
+        TableColumn<ScheduledTransaction, String> accountCol = new TableColumn<>("Account Name");
+        accountCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getAccountName()));
+
+        TableColumn<ScheduledTransaction, String> typeCol = new TableColumn<>("Transaction Type");
+        typeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTransactionType()));
+
+        TableColumn<ScheduledTransaction, String> frequencyCol = new TableColumn<>("Frequency");
+        frequencyCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getFrequency()));
+
+        TableColumn<ScheduledTransaction, Integer> dueDateCol = new TableColumn<>("Due Date");
+        dueDateCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getDueDate()));
+
+        TableColumn<ScheduledTransaction, Double> amountCol = new TableColumn<>("Payment Amount");
+        amountCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getPaymentAmount()));
+
+        // Add columns to the table
+        table.getColumns().addAll(scheduleNameCol, accountCol, typeCol, frequencyCol, dueDateCol, amountCol);
+
+        // Sort table by Due Date in ascending order
+        table.getSortOrder().add(dueDateCol);
+
+        // Back button to return to the homepage
+        Button backButton = new Button("Back to Homepage");
+        backButton.setOnAction(e -> setHomeScene());
+
+        VBox layout = new VBox(10, titleLabel, table, backButton);
+        layout.setPadding(new Insets(20));
+        layout.setAlignment(Pos.CENTER);
+
+        return new Scene(layout, 600, 400);
+    }
+
+
+    private Scene getCreateScheduledTransactionScene() {
+        Label titleLabel = new Label("Create Scheduled Transaction");
+        titleLabel.setFont(new Font("Roboto Mono", 20));
+
+        TextField scheduleName = new TextField();
+        scheduleName.setPromptText("Schedule Name (e.g., Rent)");
+
+        ComboBox<String> accountDropdown = new ComboBox<>();
+        accountDropdown.getItems().addAll(accountNames);
+        accountDropdown.getSelectionModel().selectFirst();
+
+        ComboBox<String> transactionTypeDropdown = new ComboBox<>();
+        transactionTypeDropdown.getItems().addAll(transactionTypes);
+        transactionTypeDropdown.getSelectionModel().selectFirst();
+
+        TextField dueDateField = new TextField();
+        dueDateField.setPromptText("Due Date (e.g., 15)");
+
+        TextField paymentAmount = new TextField();
+        paymentAmount.setPromptText("Payment Amount");
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: red;");
+
+        Button saveButton = new Button("Save Scheduled Transaction");
+        saveButton.setOnAction(e -> {
+            String schedule = scheduleName.getText().trim();
+            String account = accountDropdown.getValue();
+            String transactionType = transactionTypeDropdown.getValue();
+            String dueDateStr = dueDateField.getText().trim();
+            String amountStr = paymentAmount.getText().trim();
+
+            // Validation logic
+            if (schedule.isEmpty() || account == null || transactionType == null || dueDateStr.isEmpty() || amountStr.isEmpty()) {
+                errorLabel.setText("Please fill in all required fields.");
+            } else if (!isInteger(dueDateStr)) {
+                errorLabel.setText("Due Date must be a valid integer.");
+            } else if (!isDouble(amountStr)) {
+                errorLabel.setText("Payment Amount must be a valid number.");
+            } else {
+                // Reset error label if validation passes
+                errorLabel.setText("");
+
+                // Save to the database
+                boolean saved = Database.saveScheduledTransaction(schedule, account, transactionType, "Monthly",
+                        Integer.parseInt(dueDateStr), Double.parseDouble(amountStr));
+
+                if (saved) {
+                    errorLabel.setStyle("-fx-text-fill: green;");
+                    errorLabel.setText("Scheduled Transaction saved successfully.");
+                    scheduleName.clear();
+                    dueDateField.clear();
+                    paymentAmount.clear();
+                } else {
+                    errorLabel.setText("Failed to save transaction. Try again.");
+                }
+            }
+        });
+
+        Button backButton = new Button("Back to Homepage");
+        backButton.setOnAction(e -> setHomeScene());
+
+        VBox layout = new VBox(10, titleLabel, scheduleName, accountDropdown, transactionTypeDropdown, dueDateField,
+                paymentAmount, errorLabel, saveButton, backButton);
+        layout.setPadding(new Insets(20));
+        layout.setAlignment(Pos.CENTER);
+
+        return new Scene(layout, 400, 400);
+    }
+
+    private boolean isInteger(String text) {
+        try {
+            Integer.parseInt(text);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 
     private void setHomeScene() {
         Label titleLabel = new Label("MyBudgeter");
@@ -58,21 +187,83 @@ public class Main extends Application {
         Button getEnterTransactionTypesSceneButton = new Button("Enter Transaction");
         getEnterTransactionTypesSceneButton.setStyle("-fx-background-color: #FF8C00; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
         getEnterTransactionTypesSceneButton.setOnAction(e -> primaryStage.setScene(getEnterTransactionTypesScene()));
+        
+        Button createScheduledTransactionButton = new Button("Create Scheduled Transaction");
+        createScheduledTransactionButton.setStyle("-fx-background-color: #FF8C00; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        createScheduledTransactionButton.setOnAction(e -> primaryStage.setScene(getCreateScheduledTransactionScene())); 
+        
+        Button getScheduledTransactionButton = new Button("View Scheduled Transactions");
+        getScheduledTransactionButton.setStyle("-fx-background-color: #FF8C00; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        getScheduledTransactionButton.setOnAction(e -> primaryStage.setScene(getScheduledTransactionsScene())); 
+        
+        Button viewTransactionsButton = new Button("View All Transactions");
+        viewTransactionsButton.setStyle("-fx-background-color: #008CBA; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        viewTransactionsButton.setOnAction(e -> showTransactionsTable(primaryStage));
+
 
         if (viewAccountsButton == null) {
             viewAccountsButton = new Button("View All Accounts");
             viewAccountsButton.setStyle("-fx-background-color: #008CBA; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
             viewAccountsButton.setOnAction(e -> showAccountsTable(primaryStage));
         }
+        
+        
 
         VBox homeLayout = new VBox(20);
         homeLayout.setPadding(new Insets(30));
         homeLayout.setAlignment(Pos.CENTER);
         homeLayout.setStyle("-fx-background-color: #F0F8FF;");
-        homeLayout.getChildren().addAll(titleLabel, createAccountButton, defineTransactionTypesButton, getEnterTransactionTypesSceneButton, viewAccountsButton);
+        homeLayout.getChildren().addAll(titleLabel, createAccountButton, defineTransactionTypesButton, getEnterTransactionTypesSceneButton,  createScheduledTransactionButton, getScheduledTransactionButton, viewTransactionsButton, viewAccountsButton);
 
-        primaryStage.setScene(new Scene(homeLayout, 400, 300));
+        primaryStage.setScene(new Scene(homeLayout, 700, 500));
     }
+    
+    private void showTransactionsTable(Stage primaryStage) {
+        // Fetch all transactions from the database
+        List<Transaction> transactions = Database.getAllTransactions();
+
+        // Create an ObservableList to be used in TableView
+        ObservableList<Transaction> transactionData = javafx.collections.FXCollections.observableArrayList(transactions);
+
+        TableView<Transaction> table = new TableView<>(transactionData);
+
+        // Create TableColumn for each transaction property
+        TableColumn<Transaction, String> accountCol = new TableColumn<>("Account Name");
+        accountCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getAccountName()));
+
+        TableColumn<Transaction, String> typeCol = new TableColumn<>("Transaction Type");
+        typeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTransactionType()));
+
+        TableColumn<Transaction, LocalDate> dateCol = new TableColumn<>("Transaction Date");
+        dateCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getTransactionDate()));
+
+        TableColumn<Transaction, String> descriptionCol = new TableColumn<>("Description");
+        descriptionCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDescription()));
+
+        TableColumn<Transaction, Double> paymentAmountCol = new TableColumn<>("Payment Amount");
+        paymentAmountCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getPaymentAmount()));
+
+        TableColumn<Transaction, Double> depositAmountCol = new TableColumn<>("Deposit Amount");
+        depositAmountCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getDepositAmount()));
+
+        // Add columns to the table
+        table.getColumns().addAll(accountCol, typeCol, dateCol, descriptionCol, paymentAmountCol, depositAmountCol);
+
+        // Back button to return to the homepage
+        Button backButton = new Button("Back to Homepage");
+        backButton.setStyle("-fx-background-color: #FF6347; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        backButton.setOnAction(e -> setHomeScene());
+
+        VBox bottomLayout = new VBox(backButton);
+        bottomLayout.setAlignment(Pos.CENTER);
+        bottomLayout.setPadding(new Insets(10));
+
+        BorderPane layout = new BorderPane(table);
+        layout.setBottom(bottomLayout);
+
+        primaryStage.setScene(new Scene(layout, 600, 400));
+    }
+
 
     private Scene getDefineTransactionTypesScene() {
         Label titleLabel = new Label("Define Transaction Types");
