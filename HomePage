@@ -53,7 +53,6 @@ public class HomePage {
         homeLayout.setPadding(new Insets(30)); 
         homeLayout.setAlignment(Pos.CENTER); 
         homeLayout.setStyle("-fx-background-color: #F0F8FF;");
-        homeLayout.getChildren().addAll(titleLabel, createAccountButton);
 
         homeLayout.getChildren().addAll(titleLabel, createAccountButton, scheduledTransactionsButton);
         homeLayout.getChildren().add(showTransactionsButton);
