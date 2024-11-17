@@ -14,7 +14,29 @@ public class Database {
 
 
     public static void main(String[] args) {
-        createDatabase();
+    	createDatabase();
+    }
+    
+    public static void clearDatabase() {
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             Statement stmt = conn.createStatement()) {
+
+            // Clear data from tables
+            String deleteFromAccounts = "DELETE FROM Accounts;";
+            String deleteFromTransactionTypes = "DELETE FROM transaction_types;";
+            String deleteFromTransactions = "DELETE FROM transactions;";
+            String deleteFromScheduledTransactions = "DELETE FROM scheduled_transactions;";
+
+            stmt.executeUpdate(deleteFromTransactions);
+            stmt.executeUpdate(deleteFromTransactionTypes);
+            stmt.executeUpdate(deleteFromAccounts);
+            stmt.executeUpdate(deleteFromScheduledTransactions);
+
+            System.out.println("All data cleared from the database.");
+
+        } catch (SQLException e) {
+            System.err.println("Error clearing the database: " + e.getMessage());
+        }
     }
     
     public static void createDatabase() {
@@ -86,6 +108,30 @@ public class Database {
         return transactions;
     }
     
+//    public static void ensureScheduledTransactionsTableExists() {
+//        String sql = "CREATE TABLE IF NOT EXISTS scheduled_transactions (" +
+//                     "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+//                     "schedule_name TEXT NOT NULL, " +
+//                     "account_name TEXT NOT NULL, " +
+//                     "transaction_type TEXT NOT NULL, " +
+//                     "frequency TEXT NOT NULL, " +
+//                     "due_date INTEGER NOT NULL, " +
+//                     "payment_amount REAL NOT NULL, " +
+//                     "FOREIGN KEY (account_name) REFERENCES Accounts(AccountName), " +
+//                     "FOREIGN KEY (transaction_type) REFERENCES transaction_types(type_name)" +
+//                     ")";
+//
+//        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+//             Statement stmt = conn.createStatement()) {
+//
+//            stmt.executeUpdate(sql); // Create the table if it doesn't exist
+//            System.out.println("Scheduled Transactions table ensured.");
+//
+//        } catch (SQLException e) {
+//            System.err.println("Error ensuring scheduled_transactions table exists: " + e.getMessage());
+//        }
+//    }
+    
     public static void saveTransactionType(String transactionType) {
         String sql = "INSERT OR IGNORE INTO transaction_types (type_name) VALUES (?)";
 
@@ -122,35 +168,28 @@ public class Database {
     
     public static ObservableList<ScheduledTransaction> getAllScheduledTransactions() {
         ObservableList<ScheduledTransaction> scheduledTransactionsList = FXCollections.observableArrayList();
-        String sql = "SELECT account_name, transaction_type, transaction_date, description, payment_amount, deposit_amount " +
-                     "FROM transactions " +
-                     "ORDER BY transaction_date ASC"; // Adjust sorting if needed
+        String sql = "SELECT schedule_name, account_name, transaction_type, frequency, due_date, payment_amount " +
+                     "FROM scheduled_transactions " +
+                     "ORDER BY due_date ASC"; // Adjust sorting if needed
 
         try (Connection conn = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
+                String scheduleName = rs.getString("schedule_name");
                 String accountName = rs.getString("account_name");
                 String transactionType = rs.getString("transaction_type");
-                LocalDate transactionDate = LocalDate.parse(rs.getString("transaction_date"));
-                String description = rs.getString("description");
+                String frequency = rs.getString("frequency");
+                int dueDate = rs.getInt("due_date");
                 double paymentAmount = rs.getDouble("payment_amount");
-                double depositAmount = rs.getDouble("deposit_amount");
 
-                // Assuming 'scheduleName' and 'frequency' are not in the database
-                String scheduleName = "Default Schedule";  // Example placeholder value
-                String frequency = "Monthly";  // Example placeholder value
-
-                // Use the day of the month as the due date (you can adjust based on your needs)
-                int dueDate = transactionDate.getDayOfMonth();
-
-                // Create the ScheduledTransaction with the above details
+                // Create the ScheduledTransaction object with the retrieved data
                 ScheduledTransaction scheduledTransaction = new ScheduledTransaction(
-                    scheduleName,      // Use scheduleName if available in the database
+                    scheduleName,
                     accountName,
                     transactionType,
-                    frequency,         // Use frequency if available in the database
+                    frequency,
                     dueDate,
                     paymentAmount
                 );
@@ -243,11 +282,29 @@ public class Database {
     
     public static boolean saveScheduledTransaction(String scheduleName, String accountName, String transactionType,
         String frequency, int dueDate, double paymentAmount) {
-		if (scheduleName == null || accountName == null || transactionType == null || frequency == null) {
-		return false;
-		}
+		//ensureScheduledTransactionsTableExists(); // Ensure the table exists
+		String sql = "INSERT INTO scheduled_transactions (schedule_name, account_name, transaction_type, frequency, due_date, payment_amount) " +
+		"VALUES (?, ?, ?, ?, ?, ?)";
 		
-		scheduledTransactions.add(new ScheduledTransaction(scheduleName, accountName, transactionType, frequency, dueDate, paymentAmount));
+		try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+		PreparedStatement pstmt = conn.prepareStatement(sql)) {
+		
+		pstmt.setString(1, scheduleName);
+		pstmt.setString(2, accountName);
+		pstmt.setString(3, transactionType);
+		pstmt.setString(4, frequency);
+		pstmt.setInt(5, dueDate);
+		pstmt.setDouble(6, paymentAmount);
+		
+		pstmt.executeUpdate();
+		
+		System.out.println("Scheduled transaction saved successfully: " + scheduleName);
 		return true;
-    }
+		
+		} catch (SQLException e) {
+		System.err.println("Error saving scheduled transaction: " + e.getMessage());
+		return false;
+	}
+
+}
 }
