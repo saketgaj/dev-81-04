@@ -27,8 +27,12 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
         Database.createDatabase();
+       // Database.ensureScheduledTransactionsTableExists();
 
         loadResources();
+        
+        refreshAccountNames();
+        refreshTransactionTypes();
 
         setHomeScene();
 
@@ -44,6 +48,19 @@ public class Main extends Application {
             e.printStackTrace();
         }
     }
+    
+    private void refreshAccountNames() {
+        accountNames.clear();
+        for (Account account : Database.getAllAccounts()) {
+            accountNames.add(account.getAccountName());
+        }
+    }
+    
+    private void refreshTransactionTypes() {
+        transactionTypes.clear();
+        transactionTypes.addAll(Database.getAllTransactionTypes()); // Fetch from the database
+    }
+
     
     private Scene getScheduledTransactionsScene() {
         Label titleLabel = new Label("Scheduled Transactions");
@@ -93,6 +110,8 @@ public class Main extends Application {
 
 
     private Scene getCreateScheduledTransactionScene() {
+    	refreshAccountNames();
+    	
         Label titleLabel = new Label("Create Scheduled Transaction");
         titleLabel.setFont(new Font("Roboto Mono", 20));
 
@@ -100,8 +119,8 @@ public class Main extends Application {
         scheduleName.setPromptText("Schedule Name (e.g., Rent)");
 
         ComboBox<String> accountDropdown = new ComboBox<>();
-        accountDropdown.getItems().addAll(accountNames);
-        accountDropdown.getSelectionModel().selectFirst();
+        accountDropdown.getItems().addAll(accountNames); 
+        accountDropdown.getSelectionModel().selectFirst(); 
 
         ComboBox<String> transactionTypeDropdown = new ComboBox<>();
         transactionTypeDropdown.getItems().addAll(transactionTypes);
@@ -123,7 +142,7 @@ public class Main extends Application {
             String transactionType = transactionTypeDropdown.getValue();
             String dueDateStr = dueDateField.getText().trim();
             String amountStr = paymentAmount.getText().trim();
-
+                        
             // Validation logic
             if (schedule.isEmpty() || account == null || transactionType == null || dueDateStr.isEmpty() || amountStr.isEmpty()) {
                 errorLabel.setText("Please fill in all required fields.");
@@ -162,6 +181,7 @@ public class Main extends Application {
         return new Scene(layout, 400, 400);
     }
 
+
     private boolean isInteger(String text) {
         try {
             Integer.parseInt(text);
@@ -172,6 +192,7 @@ public class Main extends Application {
     }
 
     private void setHomeScene() {
+    	refreshAccountNames();
         Label titleLabel = new Label("MyBudgeter");
         titleLabel.setFont(new Font("Roboto Mono", 24));
         titleLabel.setTextFill(javafx.scene.paint.Color.web("#2E8B57"));
@@ -274,6 +295,8 @@ public class Main extends Application {
 
         Label errorLabel = new Label();
         errorLabel.setStyle("-fx-text-fill: red;");
+        
+        
 
         Button saveButton = new Button("Save Transaction Type");
         saveButton.setOnAction(e -> {
@@ -281,13 +304,18 @@ public class Main extends Application {
 
             if (transactionType.isEmpty()) {
                 errorLabel.setText("Transaction type name cannot be empty.");
-            } else if (transactionTypes.contains(transactionType)) {
-                errorLabel.setText("Transaction type already exists.");
-            } else {
-                transactionTypes.add(transactionType);
+            } 
+         else if (transactionTypes.contains(transactionType)) {
+            errorLabel.setText("Transaction type already exists.");
+        }
+        else {
+                Database.saveTransactionType(transactionType);
+                transactionTypes.clear();
+                transactionTypes.addAll(Database.getAllTransactionTypes());
                 errorLabel.setText("Transaction type added successfully.");
                 transactionTypeField.clear();
             }
+  
         });
 
         Button backButton = new Button("Back to Homepage");
