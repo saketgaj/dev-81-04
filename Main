@@ -221,6 +221,10 @@ public class Main extends Application {
         Button searchTransactionsButton = new Button("Search Transactions");
         searchTransactionsButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
         searchTransactionsButton.setOnAction(e -> primaryStage.setScene(getSearchTransactionScene(primaryStage)));
+
+        Button searchScheduledTransactionsButton = new Button("Search Scheduled Transactions");
+        searchScheduledTransactionsButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
+        searchScheduledTransactionsButton.setOnAction(e -> primaryStage.setScene(getScheduledSearchTransactionScene(primaryStage)));
         
         Button viewTransactionsButton = new Button("View All Transactions");
         viewTransactionsButton.setStyle("-fx-background-color: #008CBA; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px;");
@@ -239,9 +243,9 @@ public class Main extends Application {
         homeLayout.setPadding(new Insets(30));
         homeLayout.setAlignment(Pos.CENTER);
         homeLayout.setStyle("-fx-background-color: #F0F8FF;");
-        homeLayout.getChildren().addAll(titleLabel, createAccountButton, defineTransactionTypesButton, getEnterTransactionTypesSceneButton,  createScheduledTransactionButton, getScheduledTransactionButton, viewTransactionsButton, viewAccountsButton, searchTransactionsButton);
+        homeLayout.getChildren().addAll(titleLabel, createAccountButton, defineTransactionTypesButton, getEnterTransactionTypesSceneButton,  createScheduledTransactionButton, getScheduledTransactionButton, viewTransactionsButton, viewAccountsButton, searchTransactionsButton, searchScheduledTransactionsButton);
 
-        primaryStage.setScene(new Scene(homeLayout, 700, 500));
+        primaryStage.setScene(new Scene(homeLayout, 1000, 800));
     }
     
     private void showTransactionsTable(Stage primaryStage) {
