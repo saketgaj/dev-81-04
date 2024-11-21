@@ -93,6 +93,7 @@ public class Database {
 
             while (rs.next()) {
                 transactions.add(new Transaction(
+                		rs.getInt("id"),
                         rs.getString("account_name"),
                         rs.getString("transaction_type"),
                         LocalDate.parse(rs.getString("transaction_date")),
@@ -215,6 +216,7 @@ public class Database {
 
             while (rs.next()) {
                 Transaction transaction = new Transaction(
+                	rs.getInt("id"),
                     rs.getString("account_name"),
                     rs.getString("transaction_type"),
                     LocalDate.parse(rs.getString("transaction_date")),
@@ -314,52 +316,118 @@ public class Database {
     }
     // Method to save a transaction to the database
     public static boolean saveTransaction(String accountName, String transactionType, LocalDate date, 
-                                          String description, double paymentAmount, double depositAmount) {
-    	String sql = "INSERT INTO transactions(account_name, transaction_type, transaction_date, description, payment_amount, deposit_amount) " +
-                "VALUES(?, ?, ?, ?, ?, ?)";
+    	    String description, double paymentAmount, double depositAmount) {
+    	    String sql = "INSERT INTO transactions(account_name, transaction_type, transaction_date, description, payment_amount, deposit_amount) " +
+    	                 "VALUES(?, ?, ?, ?, ?, ?)";
 
+    	    try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+    	         PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) { // Request generated keys
+    	        pstmt.setString(1, accountName);
+    	        pstmt.setString(2, transactionType);
+    	        pstmt.setString(3, date.toString());
+    	        pstmt.setString(4, description);
+    	        pstmt.setDouble(5, paymentAmount);
+    	        pstmt.setDouble(6, depositAmount);
+    	        
+    	        pstmt.executeUpdate(); // Execute the insert
+
+    	        // Retrieve the generated ID
+    	        try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+    	            if (generatedKeys.next()) {
+    	                int generatedId = generatedKeys.getInt(1);
+    	                System.out.println("Inserted transaction with ID: " + generatedId);
+    	            }
+    	        }
+    	        return true;
+    	    } catch (SQLException e) {
+    	        e.printStackTrace();
+    	        return false;
+    	    }
+    	}
+
+
+    
+    public static boolean updateTransaction(Transaction transaction) {
+        // Update statement to modify the transaction based on its ID
+        String sql = "UPDATE transactions SET account_name = ?, transaction_type = ?, transaction_date = ?, description = ?, payment_amount = ?, deposit_amount = ? WHERE id = ?";
 
         try (Connection conn = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, accountName);
-            pstmt.setString(2, transactionType);
-            pstmt.setString(3, date.toString());
-            pstmt.setString(4, description);
-            pstmt.setDouble(5, paymentAmount);
-            pstmt.setDouble(6, depositAmount);
-            pstmt.executeUpdate();
-            return true;
+
+            // Set parameters for the prepared statement
+            pstmt.setString(1, transaction.getAccountName());
+            pstmt.setString(2, transaction.getTransactionType());
+            pstmt.setString(3, transaction.getTransactionDate().toString());
+            pstmt.setString(4, transaction.getDescription());
+            pstmt.setDouble(5, transaction.getPaymentAmount());
+            pstmt.setDouble(6, transaction.getDepositAmount());
+            
+            // Use the transaction ID to specify which transaction to update
+            pstmt.setInt(7, transaction.getID());  // Set the ID for the WHERE clause
+
+            // Execute the update query
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0; // If rows are affected, the update was successful
+
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+            return false; // Update failed
         }
     }
+
+    
+    public static ObservableList<Transaction> refreshTransactions() {
+        ObservableList<Transaction> transactions = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM transactions ORDER BY transaction_date DESC";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                transactions.add(new Transaction(
+                		rs.getInt("id"),
+                        rs.getString("account_name"),
+                        rs.getString("transaction_type"),
+                        LocalDate.parse(rs.getString("transaction_date")),
+                        rs.getString("description"),
+                        rs.getDouble("payment_amount"),
+                        rs.getDouble("deposit_amount")
+                ));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return transactions;
+    }
+
+
     
     public static boolean saveScheduledTransaction(String scheduleName, String accountName, String transactionType,
-        String frequency, int dueDate, double paymentAmount) {
-		//ensureScheduledTransactionsTableExists(); // Ensure the table exists
-		String sql = "INSERT INTO scheduled_transactions (schedule_name, account_name, transaction_type, frequency, due_date, payment_amount) " +
-		"VALUES (?, ?, ?, ?, ?, ?)";
-		
-		try (Connection conn = DriverManager.getConnection(DATABASE_URL);
-		PreparedStatement pstmt = conn.prepareStatement(sql)) {
-		
-		pstmt.setString(1, scheduleName);
-		pstmt.setString(2, accountName);
-		pstmt.setString(3, transactionType);
-		pstmt.setString(4, frequency);
-		pstmt.setInt(5, dueDate);
-		pstmt.setDouble(6, paymentAmount);
-		
-		pstmt.executeUpdate();
-		
-		System.out.println("Scheduled transaction saved successfully: " + scheduleName);
-		return true;
-		
-		} catch (SQLException e) {
-		System.err.println("Error saving scheduled transaction: " + e.getMessage());
-		return false;
-	}
+    	    String frequency, int dueDate, double paymentAmount) {
+    	    String sql = "INSERT INTO scheduled_transactions (schedule_name, account_name, transaction_type, frequency, due_date, payment_amount) " +
+    	                 "VALUES (?, ?, ?, ?, ?, ?)";
+    	    
+    	    try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+    	         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    	    
+    	        pstmt.setString(1, scheduleName);
+    	        pstmt.setString(2, accountName);
+    	        pstmt.setString(3, transactionType);
+    	        pstmt.setString(4, frequency);
+    	        pstmt.setInt(5, dueDate);
+    	        pstmt.setDouble(6, paymentAmount);
+    	    
+    	        pstmt.executeUpdate();
+    	    
+    	        System.out.println("Scheduled transaction saved successfully: " + scheduleName);
+    	        return true;
+    	    
+    	    } catch (SQLException e) {
+    	        System.err.println("Error saving scheduled transaction: " + e.getMessage());
+    	        return false;
+    	    }
 
-}
+    }
 }
