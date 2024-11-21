@@ -232,6 +232,34 @@ public class Database {
     }
 
 
+    public static ObservableList<ScheduledTransaction> searchScheduledTransactionsByName(String substring) {
+        ObservableList<ScheduledTransaction> results = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM scheduled_transactions WHERE schedule_name LIKE ?";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + substring + "%");
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                ScheduledTransaction scheduledTransaction = new ScheduledTransaction(
+                    rs.getString("schedule_name"),
+                    rs.getString("account_name"),
+                    rs.getString("transaction_type"),
+                    rs.getString("frequency"),
+                    rs.getInt("due_date"),
+                    rs.getDouble("payment_amount")
+                );
+                results.add(scheduledTransaction);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return results;
+    }
+
+
     
     
     
