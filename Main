@@ -62,6 +62,53 @@ public class Main extends Application {
         transactionTypes.addAll(Database.getAllTransactionTypes()); // Fetch from the database
     }
 
+
+private Scene getScheduledTransactionsScene() {
+        Label titleLabel = new Label("Scheduled Transactions");
+        titleLabel.setFont(new Font("Roboto Mono", 20));
+
+        // Create a TableView for scheduled transactions
+        ObservableList<ScheduledTransaction> scheduledTransactions = Database.getAllScheduledTransactions();
+        	
+        TableView<ScheduledTransaction> table = new TableView<>();
+        table.setItems(scheduledTransactions);  // Use setItems to bind data to the TableView
+
+        // Define columns
+        TableColumn<ScheduledTransaction, String> scheduleNameCol = new TableColumn<>("Schedule Name");
+        scheduleNameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getScheduleName()));
+
+        TableColumn<ScheduledTransaction, String> accountCol = new TableColumn<>("Account Name");
+        accountCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getAccountName()));
+
+        TableColumn<ScheduledTransaction, String> typeCol = new TableColumn<>("Transaction Type");
+        typeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTransactionType()));
+
+        TableColumn<ScheduledTransaction, String> frequencyCol = new TableColumn<>("Frequency");
+        frequencyCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getFrequency()));
+
+        TableColumn<ScheduledTransaction, Integer> dueDateCol = new TableColumn<>("Due Date");
+        dueDateCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getDueDate()));
+
+        TableColumn<ScheduledTransaction, Double> amountCol = new TableColumn<>("Payment Amount");
+        amountCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getPaymentAmount()));
+
+        // Add columns to the table
+        table.getColumns().addAll(scheduleNameCol, accountCol, typeCol, frequencyCol, dueDateCol, amountCol);
+
+        // Sort table by Due Date in ascending order
+        table.getSortOrder().add(dueDateCol);
+
+        // Back button to return to the homepage
+        Button backButton = new Button("Back to Homepage");
+        backButton.setOnAction(e -> setHomeScene());
+
+        VBox layout = new VBox(10, titleLabel, table, backButton);
+        layout.setPadding(new Insets(20));
+        layout.setAlignment(Pos.CENTER);
+
+        return new Scene(layout, 600, 400);
+    }
+
     
     private Scene getScheduledTransactionsScene() {
         Label titleLabel = new Label("Scheduled Transactions");
