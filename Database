@@ -204,6 +204,33 @@ public class Database {
         return scheduledTransactionsList;
     }
 
+    public static ObservableList<Transaction> searchTransactionsByDescription(String substring) {
+        ObservableList<Transaction> results = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM transactions WHERE description LIKE ?";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + substring + "%");
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Transaction transaction = new Transaction(
+                    rs.getString("account_name"),
+                    rs.getString("transaction_type"),
+                    LocalDate.parse(rs.getString("transaction_date")),
+                    rs.getString("description"),
+                    rs.getDouble("payment_amount"),
+                    rs.getDouble("deposit_amount")
+                );
+                results.add(transaction);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return results;
+    }
+
 
     
     
