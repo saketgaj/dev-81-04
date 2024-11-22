@@ -169,8 +169,7 @@ public class Database {
     
     public static ObservableList<ScheduledTransaction> getAllScheduledTransactions() {
         ObservableList<ScheduledTransaction> scheduledTransactionsList = FXCollections.observableArrayList();
-        String sql = "SELECT schedule_name, account_name, transaction_type, frequency, due_date, payment_amount " +
-                     "FROM scheduled_transactions " +
+        String sql = "SELECT * FROM scheduled_transactions " +
                      "ORDER BY due_date ASC"; // Adjust sorting if needed
 
         try (Connection conn = DriverManager.getConnection(DATABASE_URL);
@@ -178,6 +177,7 @@ public class Database {
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
+            	int id = rs.getInt("id");
                 String scheduleName = rs.getString("schedule_name");
                 String accountName = rs.getString("account_name");
                 String transactionType = rs.getString("transaction_type");
@@ -187,7 +187,7 @@ public class Database {
 
                 // Create the ScheduledTransaction object with the retrieved data
                 ScheduledTransaction scheduledTransaction = new ScheduledTransaction(
-                    scheduleName,
+                    id, scheduleName,
                     accountName,
                     transactionType,
                     frequency,
@@ -245,7 +245,7 @@ public class Database {
 
             while (rs.next()) {
                 ScheduledTransaction scheduledTransaction = new ScheduledTransaction(
-                    rs.getString("schedule_name"),
+                		rs.getInt("id"), rs.getString("schedule_name"),
                     rs.getString("account_name"),
                     rs.getString("transaction_type"),
                     rs.getString("frequency"),
@@ -401,6 +401,32 @@ public class Database {
         }
         return transactions;
     }
+    
+    public static ObservableList<ScheduledTransaction> refreshScheduledTransactions() {
+        ObservableList<ScheduledTransaction> scheduledTransactions = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM scheduled_transactions ORDER BY due_date ASC";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+        	while (rs.next()) {
+        	    scheduledTransactions.add(new ScheduledTransaction(
+        	        rs.getInt("id"),
+        	        rs.getString("schedule_name"),
+        	        rs.getString("account_name"),
+        	        rs.getString("transaction_type"),
+        	        rs.getString("frequency"),
+        	        rs.getInt("due_date"), // Fixed: Keep this inside the constructor
+        	        rs.getDouble("payment_amount")  // Fixed: Moved into the constructor
+        	    ));
+        	}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return scheduledTransactions;
+    }
+
 
 
     
@@ -410,7 +436,7 @@ public class Database {
     	                 "VALUES (?, ?, ?, ?, ?, ?)";
     	    
     	    try (Connection conn = DriverManager.getConnection(DATABASE_URL);
-    	         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    	         PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
     	    
     	        pstmt.setString(1, scheduleName);
     	        pstmt.setString(2, accountName);
@@ -421,7 +447,13 @@ public class Database {
     	    
     	        pstmt.executeUpdate();
     	    
-    	        System.out.println("Scheduled transaction saved successfully: " + scheduleName);
+    	     // Retrieve the generated ID
+    	        try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+    	            if (generatedKeys.next()) {
+    	                int generatedId = generatedKeys.getInt(1);
+    	                System.out.println("Inserted scheduled transaction with ID: " + generatedId);
+    	            }
+    	        }
     	        return true;
     	    
     	    } catch (SQLException e) {
@@ -429,5 +461,33 @@ public class Database {
     	        return false;
     	    }
 
+    }
+    
+    public static boolean updateScheduledTransaction(ScheduledTransaction st) {
+        // Update statement to modify the transaction based on its ID
+        String sql = "UPDATE scheduled_transactions SET schedule_name = ?, account_name = ?, transaction_type = ?, frequency = ?, due_date = ?, payment_amount = ? WHERE id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // Set parameters for the prepared statement
+        	 pstmt.setString(1, st.getScheduleName());
+            pstmt.setString(2, st.getAccountName());
+            pstmt.setString(3, st.getTransactionType());
+            pstmt.setString(4, st.getFrequency().toString());
+            pstmt.setInt(5, st.getDueDate());
+            pstmt.setDouble(6, st.getPaymentAmount());
+            
+            // Use the transaction ID to specify which transaction to update
+            pstmt.setInt(7, st.getId());  // Set the ID for the WHERE clause
+
+            // Execute the update query
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0; // If rows are affected, the update was successful
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Update failed
+        }
     }
 }
