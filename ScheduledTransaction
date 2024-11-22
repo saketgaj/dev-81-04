@@ -1,44 +1,115 @@
 package application;
 
-public class ScheduledTransaction {
-    private String scheduleName;
-    private String accountName;
-    private String transactionType;
-    private String frequency;
-    private int dueDate;
-    private double paymentAmount;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
-    public ScheduledTransaction(String scheduleName, String accountName, String transactionType, 
+public class ScheduledTransaction {
+    private final SimpleIntegerProperty id;
+    private final SimpleStringProperty scheduleName;
+    private final SimpleStringProperty accountName;
+    private final SimpleStringProperty transactionType;
+    private final SimpleStringProperty frequency;
+    private final SimpleIntegerProperty dueDate;
+    private final SimpleDoubleProperty paymentAmount;
+
+    public ScheduledTransaction(int id, String scheduleName, String accountName, String transactionType, 
                                  String frequency, int dueDate, double paymentAmount) {
-        this.scheduleName = scheduleName;
-        this.accountName = accountName;
-        this.transactionType = transactionType;
-        this.frequency = frequency;
-        this.dueDate = dueDate;
-        this.paymentAmount = paymentAmount;
+        this.id = new SimpleIntegerProperty(id);
+        this.scheduleName = new SimpleStringProperty(scheduleName);
+        this.accountName = new SimpleStringProperty(accountName);
+        this.transactionType = new SimpleStringProperty(transactionType);
+        this.frequency = new SimpleStringProperty(frequency);
+        this.dueDate = new SimpleIntegerProperty(dueDate);
+        this.paymentAmount = new SimpleDoubleProperty(paymentAmount);
+    }
+
+    // Getters and Setters
+    public int getId() {
+        return id.get();
+    }
+
+    public void setId(int id) {
+        this.id.set(id);
     }
 
     public String getScheduleName() {
-        return scheduleName;
+        return scheduleName.get();
+    }
+
+    public void setScheduleName(String scheduleName) {
+        this.scheduleName.set(scheduleName);
     }
 
     public String getAccountName() {
-        return accountName;
+        return accountName.get();
+    }
+
+    public void setAccountName(String accountName) {
+        this.accountName.set(accountName);
     }
 
     public String getTransactionType() {
-        return transactionType;
+        return transactionType.get();
+    }
+
+    public void setTransactionType(String transactionType) {
+        this.transactionType.set(transactionType);
     }
 
     public String getFrequency() {
-        return frequency;
+        return frequency.get();
+    }
+
+    public void setFrequency(String frequency) {
+        this.frequency.set(frequency);
     }
 
     public int getDueDate() {
-        return dueDate;
+        return dueDate.get();
+    }
+
+    public void setDueDate(int dueDate) {
+        this.dueDate.set(dueDate);
     }
 
     public double getPaymentAmount() {
+        return paymentAmount.get();
+    }
+
+    public void setPaymentAmount(double paymentAmount) {
+        this.paymentAmount.set(paymentAmount);
+    }
+
+    // Property Methods
+    public IntegerProperty idProperty() {
+        return id;
+    }
+
+    public StringProperty scheduleNameProperty() {
+        return scheduleName;
+    }
+
+    public StringProperty accountNameProperty() {
+        return accountName;
+    }
+
+    public StringProperty transactionTypeProperty() {
+        return transactionType;
+    }
+
+    public StringProperty frequencyProperty() {
+        return frequency;
+    }
+
+    public IntegerProperty dueDateProperty() {
+        return dueDate;
+    }
+
+    public DoubleProperty paymentAmountProperty() {
         return paymentAmount;
     }
 }
