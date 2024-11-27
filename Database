@@ -444,6 +444,55 @@ public class Database {
         }
         return scheduledTransactions;
     }
+    
+    public static ObservableList<ScheduledTransaction> getTodayScheduledTransactions() {
+        ObservableList<ScheduledTransaction> scheduledTransactions = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM scheduled_transactions WHERE due_date = ?"; // Query to match the day
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // Get the day of the month from today's date
+            int todayDayOfMonth = LocalDate.now().getDayOfMonth();
+            pstmt.setInt(1, todayDayOfMonth); // Pass today's day of the month to the query
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    // Get the transaction data
+                    int id = rs.getInt("id");
+                    String scheduleName = rs.getString("schedule_name");
+                    String accountName = rs.getString("account_name");
+                    String transactionType = rs.getString("transaction_type");
+                    String frequency = rs.getString("frequency");
+                    int dueDate = rs.getInt("due_date");
+                    double paymentAmount = rs.getDouble("payment_amount");
+
+                    // Check if the transaction is scheduled for today
+                    if (dueDate == todayDayOfMonth) {
+                        // Create a new ScheduledTransaction object
+                        ScheduledTransaction scheduledTransaction = new ScheduledTransaction(
+                            id, 
+                            scheduleName, 
+                            accountName, 
+                            transactionType, 
+                            frequency, 
+                            dueDate, 
+                            paymentAmount
+                        );
+
+                        scheduledTransactions.add(scheduledTransaction); // Add to list
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching scheduled transactions: " + e.getMessage());
+        }
+        return scheduledTransactions;
+    }
+
+
+
+
 
 
 
