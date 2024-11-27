@@ -409,9 +409,11 @@ public class Main extends Application {
     
     private void showEditTransactionPage(Transaction selectedTransaction, TableView<Transaction> table) {
         // Create editable fields for the selected transaction
-        TextField accountNameField = new TextField(selectedTransaction.getAccountName());
-        TextField transactionTypeField = new TextField(selectedTransaction.getTransactionType());
-        DatePicker transactionDateField = new DatePicker(selectedTransaction.getTransactionDate());
+    	ComboBox<String> accountNameComboBox = new ComboBox<>(Database.getAllAccountNames());
+    	accountNameComboBox.setValue(selectedTransaction.getAccountName());
+    	ComboBox<String> transactionTypeComboBox = new ComboBox<>(Database.getAllTransactionTypes());
+    	transactionTypeComboBox.setValue(selectedTransaction.getTransactionType());
+    	DatePicker transactionDateField = new DatePicker(selectedTransaction.getTransactionDate());
         TextField descriptionField = new TextField(selectedTransaction.getDescription());
         TextField paymentAmountField = new TextField(String.valueOf(selectedTransaction.getPaymentAmount()));
         TextField depositAmountField = new TextField(String.valueOf(selectedTransaction.getDepositAmount()));
@@ -422,8 +424,8 @@ public class Main extends Application {
         Button saveButton = new Button("Save Changes");
         saveButton.setOnAction(e -> {
             try {
-                String accountName = accountNameField.getText();
-                String transactionType = transactionTypeField.getText();
+                String accountName = accountNameComboBox.getValue();
+                String transactionType = transactionTypeComboBox.getValue();
                 LocalDate transactionDate = transactionDateField.getValue();
                 String description = descriptionField.getText();
                 double paymentAmount = Double.parseDouble(paymentAmountField.getText());
@@ -456,7 +458,7 @@ public class Main extends Application {
         });
 
         // Layout for the edit page
-        VBox editLayout = new VBox(10, accountNameField, transactionTypeField, transactionDateField, descriptionField, 
+        VBox editLayout = new VBox(10, accountNameComboBox, transactionTypeComboBox, transactionDateField, descriptionField, 
                 paymentAmountField, depositAmountField, saveButton, errorLabel);
         editLayout.setPadding(new Insets(20));
         editLayout.setAlignment(Pos.CENTER);
@@ -541,8 +543,10 @@ public class Main extends Application {
     private void showEditScheduledTransactionPage(ScheduledTransaction selectedST, TableView<ScheduledTransaction> table) {
         // Create editable fields for the selected scheduled transaction
         TextField scheduleNameField = new TextField(selectedST.getScheduleName());
-        TextField accountNameField = new TextField(selectedST.getAccountName());
-        TextField transactionTypeField = new TextField(selectedST.getTransactionType());
+        ComboBox<String> accountNameComboBox = new ComboBox<>(Database.getAllAccountNames());
+    	accountNameComboBox.setValue(selectedST.getAccountName());
+    	ComboBox<String> transactionTypeComboBox = new ComboBox<>(Database.getAllTransactionTypes());
+    	transactionTypeComboBox.setValue(selectedST.getTransactionType());
         TextField frequencyField = new TextField(selectedST.getFrequency());
         TextField dueDateField = new TextField(String.valueOf(selectedST.getDueDate()));
         TextField paymentAmountField = new TextField(String.valueOf(selectedST.getPaymentAmount()));
@@ -554,8 +558,8 @@ public class Main extends Application {
         saveButton.setOnAction(e -> {
             try {
                 String scheduleName = scheduleNameField.getText();
-                String accountName = accountNameField.getText();
-                String transactionType = transactionTypeField.getText();
+                String accountName = accountNameComboBox.getValue();
+                String transactionType = transactionTypeComboBox.getValue();
                 String frequency = frequencyField.getText();
                 int dueDate = Integer.parseInt(dueDateField.getText().trim());;
                 double paymentAmount = Double.parseDouble(paymentAmountField.getText());
@@ -587,7 +591,7 @@ public class Main extends Application {
         });
 
         // Layout for the edit page
-        VBox editLayout = new VBox(10, scheduleNameField, accountNameField, transactionTypeField, frequencyField, dueDateField, 
+        VBox editLayout = new VBox(10, scheduleNameField, accountNameComboBox, transactionTypeComboBox, frequencyField, dueDateField, 
                 paymentAmountField, saveButton, errorLabel);
         editLayout.setPadding(new Insets(20));
         editLayout.setAlignment(Pos.CENTER);
