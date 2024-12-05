@@ -557,4 +557,36 @@ public class Database {
             return false; // Update failed
         }
     }
+    
+    
+    public static List<Transaction> getTransactionsByAccount(String accountName) {
+        List<Transaction> transactions = new ArrayList<>();
+        String sql = "SELECT * FROM transactions WHERE account_name = ?";
+
+        try (Connection conn = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, accountName);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {      
+                Transaction transaction = new Transaction(
+                    	rs.getInt("id"),
+                        rs.getString("account_name"),
+                        rs.getString("transaction_type"),
+                        LocalDate.parse(rs.getString("transaction_date")),
+                        rs.getString("description"),
+                        rs.getDouble("payment_amount"),
+                        rs.getDouble("deposit_amount")
+                    );
+                transactions.add(transaction);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return transactions;
+    }
+    
+    
+
 }
