@@ -9,7 +9,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 public class Database {
-	static final String DATABASE_URL = "jdbc:sqlite:test1.db";
+	static final String DATABASE_URL = "jdbc:sqlite:test.db";
     private static List<ScheduledTransaction> scheduledTransactions = new ArrayList<>();
 
 
